@@ -10,16 +10,6 @@
 
 static rocksdb_t *db = NULL;
 
-static int
-kv_err(int *rocckdb_err)
-{
-	switch (rocksdb_err) {
-	case NULL:
-		return (KV_SUCCESS);
-	default:
-		return (KV_ERR_UNKNOWN);
-	}
-}
 
 void
 kv_init(char *db_dir, char *engine, char *path, size_t size)
@@ -71,7 +61,7 @@ kv_put(void *key, size_t key_size, void *value, size_t value_size)
 	char *err = NULL;
 	rocksdb_put(db, rocksdb_writeoptions_create(), key, strlen(key), value,
 		    strlen(value) + 1, &err);
-	return kv_err(err);
+	return err==NULL?KV_SUCCESS:KV_ERR_UNKNOWN;
 }
 
 int
@@ -87,7 +77,7 @@ kv_get(void *key, size_t key_size, void *value, size_t *value_size)
 	log_debug("local pmem get: key=%s", (char *)key);
 	char *value =
 	    rocksdb_get(db, rocksdb_readoptions_create(), key, strlen(key), &value_size, &err);
-	return (kv_err(err));
+	return err==NULL?KV_SUCCESS:KV_ERR_UNKNOWN;
 }
 
 int
@@ -143,14 +133,14 @@ kv_get_size(void *key, size_t key_size, size_t *value_size)
 	int err;
 	rocksdb_get(db, rocksdb_readoptions_create(), key, key_size, value_size,
 		    &err);
-	return kv_err(err);
+	return err==NULL?KV_SUCCESS:KV_ERR_UNKNOWN;
 }
 
 int
 kv_remove(void *key, size_t key_size)
 {
 	rocksdb_delete(db, rocksdb_writeoptions_create(), key, key_size, &err);
-	return kv_err(err);
+	return err==NULL?KV_SUCCESS:KV_ERR_UNKNOWN;
 }
 
 int
