@@ -79,7 +79,7 @@ kv_get(void *key, size_t key_size, void *value, size_t *value_size)
 {
 	log_debug("local rocksdb get: key=%s", (char *)key);
 	char *err = NULL;
-	value = rocksdb_get(db, rocksdb_readoptions_create(), key, strlen(key), value_size, &err);
+	value = rocksdb_get(db, rocksdb_readoptions_create(), key, key_size, value_size, &err);
 	return err==NULL?KV_SUCCESS:KV_ERR_UNKNOWN;
 }
 
@@ -117,17 +117,17 @@ kv_pget(void *key, size_t key_size, size_t off, void *value, size_t *value_size)
 {
 	log_debug("local rocksdb pget: key=%s", (char *)key);
 	char *err = NULL;
-	size_t *get_value_size = 0;
+	size_t get_value_size;
 	void *get_value = rocksdb_get(db, rocksdb_readoptions_create(), key,
-				      key_size, get_value_size, &err);
+				      key_size, &get_value_size, &err);
 	if (err != NULL)
 		return KV_ERR_UNKNOWN;
 	if (get_value == NULL)
 		return KV_ERR_NO_ENTRY;
-	if (off > *get_value_size)
+	if (off > get_value_size)
 		return KV_ERR_OUT_OF_RANGE;
-	if (off + *value_size > *get_value_size)
-		*value_size = *get_value_size - off;
+	if (off + *value_size > get_value_size)
+		*value_size = get_value_size - off;
 	memcpy(value, get_value + off, *value_size);
 	return KV_SUCCESS;
 }
