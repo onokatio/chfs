@@ -79,7 +79,7 @@ kv_get(void *key, size_t key_size, void *value, size_t *value_size)
 {
 	log_debug("local pmem get: key=%s", (char *)key);
 	char *err = NULL;
-	value = rocksdb_get(db, rocksdb_readoptions_create(), key, strlen(key), &value_size, &err);
+	value = rocksdb_get(db, rocksdb_readoptions_create(), key, strlen(key), value_size, &err);
 	return err==NULL?KV_SUCCESS:KV_ERR_UNKNOWN;
 }
 
@@ -102,7 +102,7 @@ kv_update(void *key, size_t key_size,
 	if (off + *value_size > get_value_size)
 		off = get_value_size - *value_size;
 
-	memcopy(get_value + off, value, *value_size);
+	memcpy(get_value + off, value, *value_size);
 
 	rocksdb_put(db, rocksdb_writeoptions_create(), key, key_size, get_value,
 		    get_value_size, &err);
@@ -127,7 +127,7 @@ kv_pget(void *key, size_t key_size, size_t off, void *value, size_t *value_size)
 		return KV_ERR_OUT_OF_RANGE;
 	if (off + *value_size > get_value_size)
 		*value_size = *get_value_size - off;
-	memcopy(value, get_value + off, *value_size);
+	memcpy(value, get_value + off, *value_size);
 	return KV_SUCCESS;
 }
 
@@ -156,8 +156,8 @@ kv_get_all_cb(int (*cb)(const char *, size_t, const char *, size_t, void *),
 	rocksdb_iterator_t *it = rocksdb_create_iterator(db, rocksdb_readoptions_create());
 	for (; rocksdb_iter_valid(it); rocksdb_iter_next(it)){
 		size_t key_size, value_size;
-		char *key = rocksdb_iter_key(it, &key_size);
-		char *value = rocksdb_iter_value(it, &value_size);
+		const char *key = rocksdb_iter_key(it, &key_size);
+		const char *value = rocksdb_iter_value(it, &value_size);
 		int ret = cb(key, key_size, value, value_size, arg);
 		if (ret != 0)
 			break;
