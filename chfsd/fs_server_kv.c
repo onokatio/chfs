@@ -279,9 +279,11 @@ fs_readdir_cb(const char *key, size_t key_size, const char *value,
 	log_debug("fs_readdir_cb: path='%s', key='%s', pathlen=%d, ksize=%d key_size=%d", a->path, key, a->pathlen, ksize, key_size);
 
 	if (ksize + 1 == key_size && a->pathlen < ksize &&
-		strncmp(a->path, key, a->pathlen) == 0)
-		fs_add_entry(key + a->pathlen, ino, a,
-			!ring_list_is_in_charge(key, key_size));
+		strncmp(a->path, key, a->pathlen) == 0){
+			log_debug("fs_readdir_cb: hit!");
+			fs_add_entry(key + a->pathlen, ino, a,
+			     !ring_list_is_in_charge(key, key_size));
+		}
 	return (0);
 }
 
