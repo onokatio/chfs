@@ -8,6 +8,8 @@ chfsd_SOURCES = chfsd.c ring.c ring_rpc.c fs_server.c host.c file.c key.c
 if USE_PMEMKV
 chfsd_SOURCES += fs_server_kv.c lock.c fs_kv.c pmemkv.c
 chkvdump_SOURCES = chkvdump.c key.c lock.c fs_kv.c pmemkv.c
+else if USE_ROCKSDB
+chfsd_SOURCES += fs_server_kv.c lock.c fs_kv.c rocksdb.c
 else
 chfsd_SOURCES += fs_server_posix.c fs_posix.c
 endif
@@ -18,6 +20,9 @@ LDADD = $(top_builddir)/lib/libchfs.la @MARGO_LIBS@ @OPENSSL_LIBS@
 if USE_PMEMKV
 AM_CPPFLAGS += @LIBPMEM_CFLAGS@ @LIBPMEMKV_CFLAGS@
 LDADD += @LIBPMEM_LIBS@ @LIBPMEMKV_LIBS@
+else if USE_ROCKSDB
+AM_CPPFLAGS += @ROCKSDB_CFLAGS@
+LDADD += @ROCKSDB_LIBS@
 endif
 if USE_ABT_IO
 AM_CPPFLAGS += @ABT_IO_CFLAGS@
