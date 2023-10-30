@@ -77,6 +77,18 @@ if test x$enableval != xno; then
 fi
 AC_SUBST(md5_req)
 
+AC_MSG_CHECKING([rocksdb])
+AC_ARG_WITH([rocksdb],
+  [AS_HELP_STRING([--with-rocksdb],
+    [use rocksdb @<:@default=no@:>@])],
+  [], [with_rocksdb=no])
+AC_MSG_RESULT([$with_rocksdb])
+AM_CONDITIONAL([USE_ROCKSDB], [test x$with_rocksdb != xno])
+if test x$with_rocksdb != xno; then
+  AC_DEFINE([USE_ROCKSDB], [1], [Use rocksdb])
+  PKG_CHECK_MODULES([ROCKSDB], [libpmem])
+fi
+
 AC_MSG_CHECKING([pmemkv])
 AC_ARG_WITH([pmemkv],
   [AS_HELP_STRING([--with-pmemkv],
