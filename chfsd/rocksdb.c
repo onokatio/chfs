@@ -167,12 +167,11 @@ kv_get_all_cb(int (*cb)(const char *, size_t, const char *, size_t, void *),
 		log_debug("kv_get_all_cb: calling cb(key=%s, key_size=%lu, value=%s, value_size=%lu)", key, key_size, value, value_size);
 		int ret = cb(key, key_size, value, value_size, arg);
 		if (ret != 0){
-			log_debug("kv_get_all_cb: found!");
+			log_debug("kv_get_all_cb: stop!");
 			rocksdb_iter_destroy(it);
 			return KV_SUCCESS;
 		}
 	}
 	rocksdb_iter_destroy(it);
-	log_debug("kv_get_all_cb: not found");
-	return KV_ERR_NO_ENTRY;
+	return KV_SUCCESS;
 }
