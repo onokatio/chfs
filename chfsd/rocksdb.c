@@ -60,7 +60,9 @@ kv_term()
 int
 kv_put(void *key, size_t key_size, void *value, size_t value_size)
 {
-	log_debug("local rocksdb put: key=%s", (char *)key);
+	log_debug("local rocksdb put: key=%s ", (char *)key);
+	for(int i=0; i<value_size; i++)
+		log_debug("local rocksdb put: value[%d]=%02hhX ", i, ((uint8_t *)value)[i]);
 	char *err = NULL;
 	rocksdb_put(db, rocksdb_writeoptions_create(), key, key_size, value,
 		    value_size, &err);
