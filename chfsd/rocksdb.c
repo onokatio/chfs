@@ -19,9 +19,11 @@ kv_init(char *db_dir, char *engine, char *path, size_t size)
 	if (db_dir == NULL || engine == NULL || path == NULL)
 		log_fatal("%s: invalid argument", diag);
 
+	long cpus = sysconf(_SC_NPROCESSORS_ONLN);
+
 	rocksdb_options_t *options = rocksdb_options_create();
 	rocksdb_options_increase_parallelism(
-	    options, (int)(sysconf(_SC_NPROCESSORS_ONLN);));
+	    options, (int)(cpus));
 	rocksdb_options_optimize_level_style_compaction(options, 0);
 	rocksdb_options_set_create_if_missing(options, 1);
 
@@ -76,8 +78,8 @@ int
 kv_get(void *key, size_t key_size, void *value, size_t *value_size)
 {
 	log_debug("local pmem get: key=%s", (char *)key);
-	char *value =
-	    rocksdb_get(db, rocksdb_readoptions_create(), key, strlen(key), &value_size, &err);
+	char *err = NULL;
+	value = rocksdb_get(db, rocksdb_readoptions_create(), key, strlen(key), &value_size, &err);
 	return err==NULL?KV_SUCCESS:KV_ERR_UNKNOWN;
 }
 
@@ -85,12 +87,12 @@ int
 kv_update(void *key, size_t key_size,
     size_t off, void *value, size_t *value_size)
 {
-	int err;
+	char *err = NULL;
 	int r;
 
 	char *get_value;
 	size_t get_value_size;
-	get_value = rocksdb_get(db, rocksdb_readoptions_create(), key, key_size, &get_value_size, &err);
+	get_value = rocksdb_get(db, rocksdb_readoptions_create(), key, key_size, &get_value_size, err);
 	if (err != NULL)
 		return KV_ERR_UNKNOWN;
 	if (get_value == NULL)
@@ -113,9 +115,10 @@ kv_update(void *key, size_t key_size,
 int
 kv_pget(void *key, size_t key_size, size_t off, void *value, size_t *value_size)
 {
-	void *value;
-	get_value = rocksdb_get(db, rocksdb_readoptions_create(), key, key_size,
-				value_size, &err);
+	char *err = NULL;
+	size_t *get_value_size;
+	void *get_value = rocksdb_get(db, rocksdb_readoptions_create(), key,
+				      key_size, value_size, err);
 	if (err != NULL)
 		return KV_ERR_UNKNOWN;
 	if (get_value == NULL)
@@ -131,7 +134,7 @@ kv_pget(void *key, size_t key_size, size_t off, void *value, size_t *value_size)
 int
 kv_get_size(void *key, size_t key_size, size_t *value_size)
 {
-	int err;
+	char *err = NULL;
 	rocksdb_get(db, rocksdb_readoptions_create(), key, key_size, value_size,
 		    &err);
 	return err==NULL?KV_SUCCESS:KV_ERR_UNKNOWN;
@@ -140,6 +143,7 @@ kv_get_size(void *key, size_t key_size, size_t *value_size)
 int
 kv_remove(void *key, size_t key_size)
 {
+	char *err = NULL;
 	rocksdb_delete(db, rocksdb_writeoptions_create(), key, key_size, &err);
 	return err==NULL?KV_SUCCESS:KV_ERR_UNKNOWN;
 }
