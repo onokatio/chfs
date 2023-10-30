@@ -86,7 +86,7 @@ AC_MSG_RESULT([$with_rocksdb])
 AM_CONDITIONAL([USE_ROCKSDB], [test x$with_rocksdb != xno])
 if test x$with_rocksdb != xno; then
   AC_DEFINE([USE_ROCKSDB], [1], [Use rocksdb])
-  PKG_CHECK_MODULES([ROCKSDB], [libpmem])
+  PKG_CHECK_MODULES([ROCKSDB], [rocksdb])
 fi
 
 AC_MSG_CHECKING([pmemkv])
