@@ -14,6 +14,8 @@ static rocksdb_t *db = NULL;
 void
 kv_init(char *db_dir, char *engine, char *path, size_t size)
 {
+	static const char diag[] = "kv_init";
+
 	if (db_dir == NULL || engine == NULL || path == NULL)
 		log_fatal("%s: invalid argument", diag);
 
@@ -26,9 +28,8 @@ kv_init(char *db_dir, char *engine, char *path, size_t size)
 	char *p;
 	int r;
 	struct stat sb;
-	static const char diag[] = "kv_init";
 
-	if ((p = malloc(strlen(db_dir) + 1 + strlen(path) + 1) == NULL)
+	if ((p = malloc(strlen(db_dir) + 1 + strlen(path) + 1)) == NULL)
 		log_fatal("%s: no memory", diag);
 
 	if (stat(db_dir, &sb))
