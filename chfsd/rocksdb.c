@@ -88,7 +88,6 @@ kv_update(void *key, size_t key_size,
     size_t off, void *value, size_t *value_size)
 {
 	char *err = NULL;
-	int r;
 
 	char *get_value;
 	size_t get_value_size;
@@ -125,7 +124,7 @@ kv_pget(void *key, size_t key_size, size_t off, void *value, size_t *value_size)
 		return KV_ERR_NO_ENTRY;
 	if (off > *get_value_size)
 		return KV_ERR_OUT_OF_RANGE;
-	if (off + *value_size > get_value_size)
+	if (off + *value_size > *get_value_size)
 		*value_size = *get_value_size - off;
 	memcpy(value, get_value + off, *value_size);
 	return KV_SUCCESS;
@@ -162,4 +161,5 @@ kv_get_all_cb(int (*cb)(const char *, size_t, const char *, size_t, void *),
 		if (ret != 0)
 			break;
 	}
+	return KV_SUCCESS;
 }
