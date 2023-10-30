@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "rocksdb/c.h"
 #include "kv_err.h"
 #include "kv.h"
