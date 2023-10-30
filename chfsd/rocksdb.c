@@ -157,7 +157,8 @@ kv_get_all_cb(int (*cb)(const char *, size_t, const char *, size_t, void *),
 {
 	log_debug("local rocksdb get all cb");
 	rocksdb_iterator_t *it = rocksdb_create_iterator(db, rocksdb_readoptions_create());
-	for (; rocksdb_iter_valid(it); rocksdb_iter_next(it)){
+	rocksdb_iter_seek_to_first(it);
+	for (; rocksdb_iter_valid(it); rocksdb_iter_next(it)) {
 		size_t key_size, value_size;
 		const char *key = rocksdb_iter_key(it, &key_size);
 		const char *value = rocksdb_iter_value(it, &value_size);
@@ -167,6 +168,7 @@ kv_get_all_cb(int (*cb)(const char *, size_t, const char *, size_t, void *),
 			log_debug("kv_get_all_cb: found!");
 			break;
 	}
+	rocksdb_iter_destroy(it);
 	log_debug("kv_get_all_cb: not found");
-	return KV_SUCCESS;
+	return KV_ERR_NO_ENTRY;
 }
