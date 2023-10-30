@@ -62,22 +62,22 @@ kv_put(void *key, size_t key_size, void *value, size_t value_size)
 {
 	log_debug("local rocksdb put: key=%s", (char *)key);
 	char *err = NULL;
-	rocksdb_put(db, rocksdb_writeoptions_create(), key, strlen(key), value,
-		    strlen(value) + 1, &err);
+	rocksdb_put(db, rocksdb_writeoptions_create(), key, key_size, value,
+		    value_size, &err);
 	return err==NULL?KV_SUCCESS:KV_ERR_UNKNOWN;
 }
 
 int
 kv_put_addr(void *key, size_t key_size, void **value, size_t value_size)
 {
-	log_info("local pmem put addr: not implemented");
+	log_info("local rocksdb put addr: not implemented");
 	return (KV_ERR_NOT_SUPPORTED);
 }
 
 int
 kv_get(void *key, size_t key_size, void *value, size_t *value_size)
 {
-	log_debug("local pmem get: key=%s", (char *)key);
+	log_debug("local rocksdb get: key=%s", (char *)key);
 	char *err = NULL;
 	value = rocksdb_get(db, rocksdb_readoptions_create(), key, strlen(key), value_size, &err);
 	return err==NULL?KV_SUCCESS:KV_ERR_UNKNOWN;
@@ -87,6 +87,7 @@ int
 kv_update(void *key, size_t key_size,
     size_t off, void *value, size_t *value_size)
 {
+	log_debug("local rocksdb update: key=%s", (char *)key);
 	char *err = NULL;
 
 	char *get_value;
@@ -114,6 +115,7 @@ kv_update(void *key, size_t key_size,
 int
 kv_pget(void *key, size_t key_size, size_t off, void *value, size_t *value_size)
 {
+	log_debug("local rocksdb pget: key=%s", (char *)key);
 	char *err = NULL;
 	size_t *get_value_size = 0;
 	void *get_value = rocksdb_get(db, rocksdb_readoptions_create(), key,
@@ -133,6 +135,7 @@ kv_pget(void *key, size_t key_size, size_t off, void *value, size_t *value_size)
 int
 kv_get_size(void *key, size_t key_size, size_t *value_size)
 {
+	log_debug("local rocksdb get_size: key=%s", (char *)key);
 	char *err = NULL;
 	rocksdb_get(db, rocksdb_readoptions_create(), key, key_size, value_size,
 		    &err);
@@ -142,6 +145,7 @@ kv_get_size(void *key, size_t key_size, size_t *value_size)
 int
 kv_remove(void *key, size_t key_size)
 {
+	log_debug("local rocksdb remove: key=%s", (char *)key);
 	char *err = NULL;
 	rocksdb_delete(db, rocksdb_writeoptions_create(), key, key_size, &err);
 	return err==NULL?KV_SUCCESS:KV_ERR_UNKNOWN;
@@ -151,7 +155,7 @@ int
 kv_get_all_cb(int (*cb)(const char *, size_t, const char *, size_t, void *),
 	void *arg)
 {
-	log_debug("local pmem get all cb");
+	log_debug("local rocksdb get all cb");
 	rocksdb_iterator_t *it = rocksdb_create_iterator(db, rocksdb_readoptions_create());
 	for (; rocksdb_iter_valid(it); rocksdb_iter_next(it)){
 		size_t key_size, value_size;
