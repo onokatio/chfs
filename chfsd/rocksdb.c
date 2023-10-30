@@ -29,7 +29,6 @@ kv_init(char *db_dir, char *engine, char *path, size_t size)
 	rocksdb_options_set_create_if_missing(options, 1);
 
 	char *p;
-	int r;
 	struct stat sb;
 
 	if ((p = malloc(strlen(db_dir) + 1 + strlen(path) + 1)) == NULL)
@@ -93,7 +92,7 @@ kv_update(void *key, size_t key_size,
 
 	char *get_value;
 	size_t get_value_size;
-	get_value = rocksdb_get(db, rocksdb_readoptions_create(), key, key_size, &get_value_size, err);
+	get_value = rocksdb_get(db, rocksdb_readoptions_create(), key, key_size, &get_value_size, &err);
 	if (err != NULL)
 		return KV_ERR_UNKNOWN;
 	if (get_value == NULL)
@@ -117,18 +116,18 @@ int
 kv_pget(void *key, size_t key_size, size_t off, void *value, size_t *value_size)
 {
 	char *err = NULL;
-	size_t *get_value_size;
+	size_t *get_value_size = 0;
 	void *get_value = rocksdb_get(db, rocksdb_readoptions_create(), key,
-				      key_size, value_size, err);
+				      key_size, get_value_size, &err);
 	if (err != NULL)
 		return KV_ERR_UNKNOWN;
 	if (get_value == NULL)
 		return KV_ERR_NO_ENTRY;
-	if (off > get_value_size)
+	if (off > *get_value_size)
 		return KV_ERR_OUT_OF_RANGE;
 	if (off + *value_size > get_value_size)
-		*value_size = get_value_size - off;
-	memcopy(value, get_value + off, value_size);
+		*value_size = *get_value_size - off;
+	memcopy(value, get_value + off, *value_size);
 	return KV_SUCCESS;
 }
 
