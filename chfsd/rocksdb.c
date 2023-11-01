@@ -66,7 +66,12 @@ kv_put(void *key, size_t key_size, void *value, size_t value_size)
 	char *err = NULL;
 	rocksdb_put(db, rocksdb_writeoptions_create(), key, key_size, value,
 		    value_size, &err);
-	return err==NULL?KV_SUCCESS:KV_ERR_UNKNOWN;
+	if(err==NULL){
+		return KV_SUCCESS
+	}else{
+		log_debug("local rocksdb put: error: %s", err);
+		return KV_ERR_UNKNOWN;
+	}
 }
 
 int
