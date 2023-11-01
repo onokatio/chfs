@@ -61,8 +61,8 @@ int
 kv_put(void *key, size_t key_size, void *value, size_t value_size)
 {
 	log_debug("local rocksdb put: key=%s ", (char *)key);
-	for(int i=0; i<value_size; i++)
-		log_debug("local rocksdb put: value[%d]=%02hhX ", i, ((uint8_t *)value)[i]);
+	//for(int i=0; i<value_size; i++)
+		//log_debug("local rocksdb put: value[%d]=%02hhX ", i, ((uint8_t *)value)[i]);
 	char *err = NULL;
 	rocksdb_put(db, rocksdb_writeoptions_create(), key, key_size, value,
 		    value_size, &err);
@@ -164,7 +164,7 @@ kv_get_all_cb(int (*cb)(const char *, size_t, const char *, size_t, void *),
 		size_t key_size, value_size;
 		const char *key = rocksdb_iter_key(it, &key_size);
 		const char *value = rocksdb_iter_value(it, &value_size);
-		log_debug("kv_get_all_cb: calling cb(key=%s, key_size=%lu, value=%s, value_size=%lu)", key, key_size, value, value_size);
+		//log_debug("kv_get_all_cb: calling cb(key=%s, key_size=%lu, value=%s, value_size=%lu)", key, key_size, value, value_size);
 		int ret = cb(key, key_size, value, value_size, arg);
 		if (ret != 0){
 			log_debug("kv_get_all_cb: stop!");

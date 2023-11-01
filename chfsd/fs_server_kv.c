@@ -276,7 +276,7 @@ fs_readdir_cb(const char *key, size_t key_size, const char *value,
 	struct fs_readdir_arg *a = arg;
 	int ksize = strlen(key);
 	struct inode *ino = (struct inode *)value;
-	log_debug("fs_readdir_cb: path='%s', key='%s', pathlen=%d, ksize=%d key_size=%d", a->path, key, a->pathlen, ksize, key_size);
+	//log_debug("fs_readdir_cb: path='%s', key='%s', pathlen=%d, ksize=%d key_size=%d", a->path, key, a->pathlen, ksize, key_size);
 
 	if (ksize + 1 == key_size && a->pathlen < ksize &&
 		strncmp(a->path, key, a->pathlen) == 0){
