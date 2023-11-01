@@ -87,6 +87,8 @@ AM_CONDITIONAL([USE_ROCKSDB], [test x$with_rocksdb != xno])
 if test x$with_rocksdb != xno; then
   AC_DEFINE([USE_ROCKSDB], [1], [Use rocksdb])
   PKG_CHECK_MODULES([ROCKSDB], [rocksdb])
+  ROCKSDB_RPATH=$(pkg-config --libs-only-L rocksdb | sed 's/-L/-R/g')
+  AC_SUBST(ROCKSDB_RPATH)
 fi
 
 AC_MSG_CHECKING([pmemkv])
