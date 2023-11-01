@@ -181,7 +181,7 @@ kv_remove(void *key, size_t key_size)
 	void *hoge; //not use
 	size_t *fuga; //not use
 	char isexist = kv_get(key, key_size, hoge, fuga);
-	if (isexist != KV_ERR_NO_ENTRY) {
+	if (isexist != KV_SUCCESS) {
 		log_debug("local rocksdb remove isexist failed");
 		return isexist;
 	}
