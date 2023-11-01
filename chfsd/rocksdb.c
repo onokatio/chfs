@@ -87,6 +87,10 @@ kv_get(void *key, size_t key_size, void *value, size_t *value_size)
 	log_debug("local rocksdb get: key=%s", (char *)key);
 	char *err = NULL;
 	value = rocksdb_get(db, rocksdb_readoptions_create(), key, key_size, value_size, &err);
+	if (value == NULL) {
+		log_debug("local rocksdb get: no entory");
+		return KV_ERR_NO_ENTRY;
+	}
 	if(err!=NULL){
 		log_debug("local rocksdb get: error: %s", err);
 		return KV_ERR_UNKNOWN;
