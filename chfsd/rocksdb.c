@@ -87,12 +87,15 @@ kv_get(void *key, size_t key_size, void *value, size_t *value_size)
 	log_debug("local rocksdb get: key=%s", (char *)key);
 	char *err = NULL;
 	value = rocksdb_get(db, rocksdb_readoptions_create(), key, key_size, value_size, &err);
-	if(err==NULL){
-		return KV_SUCCESS;
-	} else {
+	if(err!=NULL){
 		log_debug("local rocksdb get: error: %s", err);
 		return KV_ERR_UNKNOWN;
 	}
+	if (get_value == NULL) {
+		log_debug("local rocksdb get: no entory");
+		return KV_ERR_NO_ENTRY;
+	}
+	return KV_SUCCESS;
 }
 
 int
@@ -175,6 +178,14 @@ int
 kv_remove(void *key, size_t key_size)
 {
 	log_debug("local rocksdb remove: key=%s", (char *)key);
+	void *hoge; //not use
+	size_t *fuga; //not use
+	char isexist = kv_get(key, key_size, hoge, fuga);
+	if (isexist != KV_ERR_NO_ENTRY) {
+		log_debug("local rocksdb remove isexist failed");
+		return isexist;
+	}
+
 	char *err = NULL;
 	rocksdb_delete(db, rocksdb_writeoptions_create(), key, key_size, &err);
 	if(err==NULL){
