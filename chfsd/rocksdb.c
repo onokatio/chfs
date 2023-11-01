@@ -91,7 +91,7 @@ kv_get(void *key, size_t key_size, void *value, size_t *value_size)
 		log_debug("local rocksdb get: error: %s", err);
 		return KV_ERR_UNKNOWN;
 	}
-	if (get_value == NULL) {
+	if (value_size == NULL) {
 		log_debug("local rocksdb get: no entory");
 		return KV_ERR_NO_ENTRY;
 	}
