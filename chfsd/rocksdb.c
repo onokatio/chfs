@@ -146,6 +146,7 @@ kv_pget(void *key, size_t key_size, size_t off, void *value, size_t *value_size)
 	if (off + *value_size > get_value_size)
 		*value_size = get_value_size - off;
 	memcpy(value, get_value + off, *value_size);
+	log_debug("local rocksdb pget: success");
 	return KV_SUCCESS;
 }
 
