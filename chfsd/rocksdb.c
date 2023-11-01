@@ -178,13 +178,13 @@ int
 kv_remove(void *key, size_t key_size)
 {
 	log_debug("local rocksdb remove: key=%s", (char *)key);
-	char *hoge; //not use
-	size_t fuga; //not use
-	char isexist = kv_get(key, key_size, hoge, &fuga);
-	if (isexist != KV_SUCCESS) {
-		log_debug("local rocksdb remove isexist failed");
-		return isexist;
-	}
+	//char *hoge; //not use
+	//size_t fuga; //not use
+	//char isexist = kv_get(key, key_size, hoge, &fuga);
+	//if (isexist != KV_SUCCESS) {
+	//	log_debug("local rocksdb remove isexist failed");
+	//	return isexist;
+	//}
 
 	char *err = NULL;
 	rocksdb_delete(db, rocksdb_writeoptions_create(), key, key_size, &err);
