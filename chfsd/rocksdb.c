@@ -68,8 +68,10 @@ kv_put(void *key, size_t key_size, void *value, size_t value_size)
 	//for(int i=0; i<value_size; i++)
 		//log_debug("local rocksdb put: value[%d]=%02hhX ", i, ((uint8_t *)value)[i]);
 	char *err = NULL;
-	rocksdb_put(db, rocksdb_writeoptions_create(), key, key_size, value,
-		    value_size, &err);
+	rocksdb_writeoptions_t *writeoptions = rocksdb_writeoptions_create();
+	rocksdb_writeoptions_disable_WAL(writeoptions, 1);
+	rocksdb_put(db, writeoptions , key, key_size, value,
+						     value_size, &err);
 	if(err==NULL){
 		return KV_SUCCESS;
 	} else {
@@ -125,7 +127,9 @@ kv_update(void *key, size_t key_size,
 
 	memcpy(get_value + off, value, *value_size);
 
-	rocksdb_put(db, rocksdb_writeoptions_create(), key, key_size, get_value,
+	rocksdb_writeoptions_t *writeoptions = rocksdb_writeoptions_create();
+	rocksdb_writeoptions_disable_WAL(writeoptions, 1);
+	rocksdb_put(db, writeoptions, key, key_size, get_value,
 		    get_value_size, &err);
 	if (err != NULL){
 		log_debug("local rocksdb update: error: %s", err);
@@ -191,7 +195,9 @@ kv_remove(void *key, size_t key_size)
 	}
 
 	char *err = NULL;
-	rocksdb_delete(db, rocksdb_writeoptions_create(), key, key_size, &err);
+	rocksdb_writeoptions_t *writeoptions = rocksdb_writeoptions_create();
+	rocksdb_writeoptions_disable_WAL(writeoptions, 1);
+	rocksdb_delete(db, writeoptions , key, key_size, &err);
 	if(err==NULL){
 		return KV_SUCCESS;
 	} else {
