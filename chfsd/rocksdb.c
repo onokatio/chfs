@@ -33,7 +33,7 @@ kv_init(char *db_dir, char *engine, char *path, size_t size)
 	//rocksdb_options_enable_statistics(options);
 	//rocksdb_options_set_statistics_level(options,
 	//				     rocksdb_statistics_level_all);
-	rocksdb_options_set_stats_dump_period_sec(options, 2);
+	rocksdb_options_set_stats_dump_period_sec(options, 10);
     rocksdb_options_set_create_if_missing(options, 1);
 
 	char *p;
