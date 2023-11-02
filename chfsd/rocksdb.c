@@ -25,8 +25,8 @@ kv_init(char *db_dir, char *engine, char *path, size_t size)
 	rocksdb_options_t *options = rocksdb_options_create();
 	rocksdb_options_increase_parallelism(
 	    options, (int)(cpus));
-	rocksdb_options_set_max_background_compactions(options, (int)(cpus));
-	rocksdb_options_set_max_background_flushes(options, (int)(cpus));
+	rocksdb_options_set_max_background_compactions(options, 1);
+	rocksdb_options_set_max_background_flushes(options, 1);
 	rocksdb_options_set_level_compaction_dynamic_level_bytes(options, 1);
 	rocksdb_options_optimize_level_style_compaction(options, 0);
 	rocksdb_options_set_bytes_per_sync(options, 1048576);
