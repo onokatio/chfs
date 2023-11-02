@@ -30,6 +30,11 @@ kv_init(char *db_dir, char *engine, char *path, size_t size)
 	rocksdb_options_set_level_compaction_dynamic_level_bytes(options, 1);
 	rocksdb_options_optimize_level_style_compaction(options, 0);
 	rocksdb_options_set_bytes_per_sync(options, 1048576);
+	rocksdb_options_set_write_buffer_size(options,
+					      1024 * 1024 * 1024); // 1GB
+	rocksdb_options_set_level0_file_num_compaction_trigger(options, -1);
+	rocksdb_options_set_target_file_size_base(options,
+						  1024 * 1024 * 1024); // 1GB
 	//rocksdb_options_enable_statistics(options);
 	//rocksdb_options_set_statistics_level(options,
 	//				     rocksdb_statistics_level_all);
