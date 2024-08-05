@@ -33,7 +33,13 @@ mpirun -x PATH -np 4 -hostfile hosts -map-by node ior -o $BACKEND/test-mpiio -g 
 ls -l $BACKEND
 rm $BACKEND/configure
 rm -f $BACKEND/test-chfs $BACKEND/test-mpiio
-ls -l $BACKEND/rdbench
+ENVDIR=~/rdbench-venv
+[ -d $ENVDIR ] && {
+	. $ENVDIR/bin/activate 2> /dev/null
+	python rdbench/viz.py
+	deactivate 2> /dev/null
+}
+rm -rf $BACKEND/rdbench
 
 chfsctl -h hosts -m $MDIR status
 

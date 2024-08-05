@@ -13,7 +13,8 @@ RUN apt-get update \
     git fuse sudo vim curl wget \
     libfuse-dev pandoc \
     gfortran bzip2 flex libpmix-dev libnl-3-dev libibverbs-dev libssl-dev \
-    gdb numactl
+    gdb numactl \
+    python3 python3-venv python3-pip
 
 RUN \
   # sshd
