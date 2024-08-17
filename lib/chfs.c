@@ -358,6 +358,7 @@ chfs_term_without_sync()
 
 	initialized = 0;
 
+	log_info("chfs_term");
 	return (0);
 }
 
@@ -1050,14 +1051,15 @@ int
 chfs_fsync(int fd)
 {
 	fd_flush(fd);
+	log_info("chfs_fsync: fd=%d", fd);
 	return (0);
 }
 
 int
 chfs_close(int fd)
 {
-	log_info("chfs_close: fd=%d", fd);
 	fd_flush(fd);
+	log_info("chfs_close: fd=%d", fd);
 	return (clear_fd(fd));
 }
 
@@ -1501,6 +1503,8 @@ chfs_seek(int fd, off_t off, int whence)
 	}
 	if (pos < 0)
 		errno = EINVAL;
+	log_info("chfs_seek: fd=%d off=%ld whence=%d pos=%ld", fd, off, whence,
+			pos);
 	return (pos);
 }
 
@@ -1544,6 +1548,7 @@ chfs_unlink(const char *path)
 	if (i == UNLINK_CHUNK_SIZE)
 		chfs_unlink_chunk_all(p, UNLINK_CHUNK_SIZE);
 	free(p);
+	log_info("%s: path=%s", diag, path);
 	return (0);
 }
 
@@ -1569,6 +1574,7 @@ chfs_mkdir(const char *path, mode_t mode)
 		chfs_set_errno(ret, err, diag);
 		return (-1);
 	}
+	log_info("%s: path=%s mode=%o", diag, path, mode);
 	return (0);
 }
 
@@ -1594,6 +1600,7 @@ chfs_rmdir(const char *path)
 		chfs_set_errno(ret, err, diag);
 		return (-1);
 	}
+	log_info("%s: path=%s", diag, path);
 	return (0);
 }
 
@@ -1627,6 +1634,7 @@ chfs_symlink(const char *target, const char *path)
 		chfs_set_errno(ret, err, diag);
 		return (-1);
 	}
+	log_info("%s: target=%s path=%s", diag, target, path);
 	return (0);
 }
 
@@ -1662,6 +1670,7 @@ chfs_readlink(const char *path, char *buf, size_t size)
 	}
 	if (s > 1 && buf[s - 1] == '\0')
 		--s;
+	log_info("%s: path=%s", diag, path);
 	return (s);
 }
 
@@ -1710,6 +1719,7 @@ chfs_stat(const char *path, struct stat *st)
 	st->st_blocks = NUM_BLOCKS(st->st_size);
 	if (!S_ISREG(st->st_mode) || sb.size != sb.chunk_size) {
 		free(p);
+		log_info("%s (1): path=%s", diag, path);
 		return (0);
 	}
 	for (j = 0, i = 1;;) {
@@ -1737,6 +1747,7 @@ chfs_stat(const char *path, struct stat *st)
 	}
 	st->st_blocks = NUM_BLOCKS(st->st_size);
 	free(p);
+	log_info("%s (2): path=%s", diag, path);
 	return (0);
 }
 
@@ -1794,6 +1805,7 @@ chfs_truncate(const char *path, off_t len)
 			break;
 	}
 	free(p);
+	log_info("%s: path=%s len=%ld", diag, path, len);
 	return (0);
 }
 
@@ -1908,6 +1920,7 @@ chfs_readdir(const char *path, void *buf,
 	}
 	ring_list_copy_free(&node_list);
 	free(p);
+	log_info("chfs_readdir: path=%s", path);
 	return (0);
 }
 
@@ -1925,6 +1938,7 @@ chfs_readdir_index(const char *path, int index, void *buf,
 		fs_rpc_readdir_replica(target, p, buf, filler, &err);
 	free(target);
 	free(p);
+	log_info("chfs_readdir_index: path=%s index=%d", path, index);
 	return (0);
 }
 
@@ -1998,6 +2012,7 @@ chfs_sync()
 	free(r);
 ring_list_free:
 	ring_list_copy_free(&nlist);
+	log_info("%s", diag);
 }
 
 static int stagein_bufsize = 1024 * 1024;
@@ -2089,5 +2104,6 @@ free_dst:
 free_src:
 	free(src);
 
+	log_info("chfs_stagein: path=%s", path);
 	return (st);
 }
