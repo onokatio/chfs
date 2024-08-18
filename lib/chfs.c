@@ -1969,7 +1969,7 @@ chfs_unlink_chunk_all(char *p, int index)
 		req[i].e = fs_async_rpc_inode_unlink_chunk_all_request(
 				node_list.s[ii].address, p, index, &req[i].r);
 		if (req[i].e != HG_SUCCESS)
-			log_error("%s (request): %s: %s", diag, p,
+			log_notice("%s (request): %s: %s", diag, p,
 				HG_Error_to_string(req[i].e));
 	}
 	for (i = 0; i < node_list.n; ++i) {
@@ -1983,7 +1983,7 @@ chfs_unlink_chunk_all(char *p, int index)
 				if (rv == 0)
 					rv = rv2;
 			} else
-				log_error("%s (wait): %s: %s", diag, p,
+				log_notice("%s (wait): %s: %s", diag, p,
 					HG_Error_to_string(ret));
 		}
 	}
