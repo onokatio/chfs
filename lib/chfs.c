@@ -1752,6 +1752,31 @@ chfs_stat(const char *path, struct stat *st)
 }
 
 int
+chfs_access(const char *path, int mode)
+{
+	char *p = canonical_path(path);
+	struct fs_stat sb;
+	hg_return_t ret;
+	int err;
+	static const char diag[] = "chfs_access";
+
+	if (p == NULL)
+		return (-1);
+	if (p[0]) {
+		ret = chfs_rpc_inode_stat(p, strlen(p) + 1, chfs_chunk_size,
+			&sb, &err);
+		if (ret != HG_SUCCESS || err != KV_SUCCESS) {
+			free(p);
+			chfs_set_errno(ret, err, diag);
+			return (-1);
+		}
+	}
+	free(p);
+	log_info("%s: path=%s", diag, path);
+	return (0);
+}
+
+int
 chfs_truncate(const char *path, off_t len)
 {
 	char *p;
