@@ -693,24 +693,45 @@ err:
 }
 
 hg_return_t
-fs_async_rpc_inode_unlink_chunk_all(const char *server, void *path, int index)
+fs_async_rpc_inode_unlink_chunk_all_request(const char *server,
+	void *path, int index, fs_request_t *rp)
 {
-	hg_handle_t h;
-	hg_return_t ret, ret2;
+	hg_return_t ret;
 	fs_unlink_all_t in;
 	static const char diag[] = "fs_rpc_inode_unlink_chunk_all";
 
-	ret = create_rpc_handle(server, env.unlink_all_rpc, &h, diag);
+	ret = create_rpc_handle(server, env.unlink_all_rpc, &rp->h, diag);
 	if (ret != HG_SUCCESS)
 		return (ret);
 
 	in.path = path;
 	in.index = index;
-	ret = margo_forward_timed(h, &in, fs_rpc_timeout_msec);
-	if (ret != HG_SUCCESS)
-		log_error("%s (forward): %s", diag, HG_Error_to_string(ret));
+	return (margo_iforward_timed(rp->h, &in, fs_rpc_timeout_msec, &rp->r));
+}
 
-	ret2 = margo_destroy(h);
+hg_return_t
+fs_async_rpc_inode_unlink_chunk_all_wait(int32_t *out, fs_request_t *rp)
+{
+	hg_return_t ret, ret2;
+	static const char diag[] = "fs_async_rpc_inode_unlink_chunk_all_wait";
+
+	if (rp->h == NULL) {
+		*out = KV_SUCCESS;
+		return (HG_SUCCESS);
+	}
+	ret = margo_wait(rp->r);
+	if (ret != HG_SUCCESS) {
+		log_error("%s (wait): %s", diag, HG_Error_to_string(ret));
+		goto margo_destroy;
+	}
+	ret = margo_get_output(rp->h, out);
+	if (ret != HG_SUCCESS) {
+		log_error("%s (get_output): %s", diag, HG_Error_to_string(ret));
+		goto margo_destroy;
+	}
+	ret = margo_free_output(rp->h, &out);
+margo_destroy:
+	ret2 = margo_destroy(rp->h);
 	if (ret == HG_SUCCESS)
 		ret = ret2;
 	return (ret);
@@ -876,8 +897,7 @@ fs_client_init(margo_instance_id mid, int timeout)
 	env.readdir_rpc = MARGO_REGISTER(mid, "inode_readdir", hg_string_t,
 		fs_readdir_out_t, NULL);
 	env.unlink_all_rpc = MARGO_REGISTER(mid, "inode_unlink_chunk_all",
-		fs_unlink_all_t, void, NULL);
-	margo_registered_disable_response(mid, env.unlink_all_rpc, HG_TRUE);
+		fs_unlink_all_t, int32_t, NULL);
 	env.sync_rpc = MARGO_REGISTER(mid, "inode_sync", void, int32_t, NULL);
 }
 

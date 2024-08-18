@@ -1947,21 +1947,50 @@ chfs_unlink_chunk_all(char *p, int index)
 {
 	node_list_t node_list;
 	hg_return_t ret;
-	int i, ii, di;
+	int i, ii, di, rv = 0, rv2;
+	struct {
+		hg_return_t e;
+		fs_request_t r;
+	} *req;
+	static const char diag[] = "chfs_unlink_chunk_all";
 
 	chfs_ring_list_copy(&node_list);
+	req = malloc(sizeof(*req) * node_list.n);
+	if (req == NULL) {
+		rv = 1;
+		errno = ENOMEM;
+		goto list_free;
+	}
 	di = random() % node_list.n;
 	for (i = 0; i < node_list.n; ++i) {
 		ii = (i + di) % node_list.n;
 		if (node_list.s[ii].address == NULL)
 			continue;
-		ret = fs_async_rpc_inode_unlink_chunk_all(
-				node_list.s[ii].address, p, index);
-		if (ret != HG_SUCCESS)
-			continue;
+		req[i].e = fs_async_rpc_inode_unlink_chunk_all_request(
+				node_list.s[ii].address, p, index, &req[i].r);
+		if (req[i].e != HG_SUCCESS)
+			log_error("%s (request): %s: %s", diag, p,
+				HG_Error_to_string(req[i].e));
 	}
+	for (i = 0; i < node_list.n; ++i) {
+		ii = (i + di) % node_list.n;
+		if (node_list.s[ii].address == NULL)
+			continue;
+		if (req[i].e == HG_SUCCESS) {
+			ret = fs_async_rpc_inode_unlink_chunk_all_wait(&rv2,
+				&req[i].r);
+			if (ret == HG_SUCCESS) {
+				if (rv == 0)
+					rv = rv2;
+			} else
+				log_error("%s (wait): %s: %s", diag, p,
+					HG_Error_to_string(ret));
+		}
+	}
+	free(req);
+list_free:
 	ring_list_copy_free(&node_list);
-	return (0);
+	return (rv);
 }
 
 void
