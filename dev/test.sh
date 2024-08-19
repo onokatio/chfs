@@ -6,6 +6,8 @@ LANG=C
 MDIR=/tmp/a
 BACKEND=$PWD/backend
 
+trap 'rm -f $BACKEND/test-*' 0 1 2 15
+
 # clean up
 chfsctl -h hosts -m $MDIR stop 2> /dev/null
 chfsctl -h hosts clean
@@ -31,7 +33,7 @@ export LIBZPHOOK=$HOME/local/lib/libcz.so
 mpirun -x PATH -x LIBZPHOOK -x LD_PRELOAD=$HOME/local/lib/libzpoline.so -x CHFS_SERVER -x CHFS_BACKEND_PATH -x CHFS_SUBDIR_PATH -np 4 -hostfile hosts -map-by node ior -a POSIX -o /chfs/$MDIR/test-posix -g -w -r -R -G 1234567 -k
 
 chmkdir $MDIR/rdbench
-mpirun --mca io romio321 -x PATH -x CHFS_SERVER -x CHFS_BACKEND_PATH -x CHFS_SUBDIR_PATH -np 4 -hostfile hosts -map-by node rdbench -o chfs:$MDIR/rdbench/o -s 1000 --novalidate
+mpirun --mca io romio321 -x PATH -x CHFS_SERVER -x CHFS_BACKEND_PATH -x CHFS_SUBDIR_PATH -np 4 -hostfile hosts -map-by node rdbench -o chfs:$MDIR/rdbench/o -s 400 --novalidate
 
 chfsctl -h hosts -m $MDIR stop
 
@@ -41,13 +43,13 @@ mpirun -x PATH -np 4 -hostfile hosts -map-by node ior -o $BACKEND/test-posix -g 
 
 ls -l $BACKEND
 rm $BACKEND/configure
-rm -f $BACKEND/test-*
 ENVDIR=~/rdbench-venv
 [ -d $ENVDIR ] && {
 	. $ENVDIR/bin/activate 2> /dev/null
 	python rdbench/viz.py
 	deactivate 2> /dev/null
 }
+ls -l $BACKEND/rdbench
 rm -rf $BACKEND/rdbench
 
 chfsctl -h hosts -m $MDIR status
