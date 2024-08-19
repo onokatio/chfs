@@ -257,6 +257,7 @@ The following APIs are supported.
     int chfs_mkdir(const char *path, mode_t mode);
     int chfs_rmdir(const char *path);
     int chfs_stat(const char *path, struct stat *st);
+    int chfs_access(const char *path, int mode);
     int chfs_readdir(const char *path, void *buf,
             int (*filler)(void *, const char *, const struct stat *, off_t));
     int chfs_readdir_index(const char *path, int index, void *buf,
