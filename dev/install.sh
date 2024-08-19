@@ -15,5 +15,6 @@ done
 sh ./install-chfs.sh $OPT
 sh ./install-ompi.sh
 sh ./install-chfs.sh $OPT
+sh ./install-zpoline.sh
 sh ./install-ior.sh
 sh ./install-rdbench.sh

@@ -14,7 +14,8 @@ RUN apt-get update \
     libfuse-dev pandoc \
     gfortran bzip2 flex libpmix-dev libnl-3-dev libibverbs-dev libssl-dev \
     gdb numactl \
-    python3 python3-venv python3-pip
+    python3 python3-venv python3-pip \
+    binutils-dev
 
 RUN \
   # sshd

@@ -13,15 +13,7 @@ x-common: &x-common
   init: true
   networks:
     - chfs_net
-  cap_add:
-    - SYS_ADMIN
-    - SYS_PTRACE
-  devices:
-    - /dev/fuse
-  security_opt:
-    - seccomp:unconfined
-    - apparmor:unconfined
-  privileged: false
+  privileged: true
   command: >
     bash -c "sudo service ssh restart && sleep infinity"
 
