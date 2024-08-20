@@ -1970,51 +1970,51 @@ chfs_readdir_index(const char *path, int index, void *buf,
 static int
 chfs_unlink_chunk_all(char *p, int index)
 {
-	node_list_t node_list;
+	node_list_t nlist;
 	hg_return_t ret;
 	int i, ii, di, rv = 0, rv2;
 	struct {
-		hg_return_t e;
 		fs_request_t r;
+		hg_return_t e;
 	} *req;
 	static const char diag[] = "chfs_unlink_chunk_all";
 
-	chfs_ring_list_copy(&node_list);
-	req = malloc(sizeof(*req) * node_list.n);
+	chfs_ring_list_copy(&nlist);
+	req = malloc(sizeof(*req) * nlist.n);
 	if (req == NULL) {
+		log_error("%s (malloc): no memory for %ld bytes", diag,
+			sizeof(*req) * nlist.n);
 		rv = 1;
 		errno = ENOMEM;
 		goto list_free;
 	}
-	di = random() % node_list.n;
-	for (i = 0; i < node_list.n; ++i) {
-		ii = (i + di) % node_list.n;
-		if (node_list.s[ii].address == NULL)
+	di = random() % nlist.n;
+	for (i = 0; i < nlist.n; ++i) {
+		ii = (i + di) % nlist.n;
+		if (nlist.s[ii].address == NULL)
 			continue;
 		req[i].e = fs_async_rpc_inode_unlink_chunk_all_request(
-				node_list.s[ii].address, p, index, &req[i].r);
+				nlist.s[ii].address, p, index, &req[i].r);
 		if (req[i].e != HG_SUCCESS)
-			log_notice("%s (request): %s: %s", diag, p,
+			log_notice("%s (request): %s at %s: %s", diag, p,
+				nlist.s[ii].address,
 				HG_Error_to_string(req[i].e));
 	}
-	for (i = 0; i < node_list.n; ++i) {
-		ii = (i + di) % node_list.n;
-		if (node_list.s[ii].address == NULL)
+	for (i = 0; i < nlist.n; ++i) {
+		ii = (i + di) % nlist.n;
+		if (nlist.s[ii].address == NULL || req[i].e != HG_SUCCESS)
 			continue;
-		if (req[i].e == HG_SUCCESS) {
-			ret = fs_async_rpc_inode_unlink_chunk_all_wait(&rv2,
-				&req[i].r);
-			if (ret == HG_SUCCESS) {
-				if (rv == 0)
-					rv = rv2;
-			} else
-				log_notice("%s (wait): %s: %s", diag, p,
-					HG_Error_to_string(ret));
-		}
+		ret = fs_async_rpc_inode_unlink_chunk_all_wait(&rv2, &req[i].r);
+		if (ret == HG_SUCCESS) {
+			if (rv == 0)
+				rv = rv2;
+		} else
+			log_notice("%s (wait): %s: %s", diag, p,
+				HG_Error_to_string(ret));
 	}
 	free(req);
 list_free:
-	ring_list_copy_free(&node_list);
+	ring_list_copy_free(&nlist);
 	return (rv);
 }
 
@@ -2023,47 +2023,42 @@ chfs_sync()
 {
 	node_list_t nlist;
 	hg_return_t ret;
-	struct {
-		fs_request_t req;
-		int need_wait;
-	} *r;
 	int i, ii, di;
+	struct {
+		fs_request_t r;
+		hg_return_t e;
+	} *req;
 	static const char diag[] = "chfs_sync";
 
 	chfs_ring_list_copy(&nlist);
-	r = malloc(sizeof(*r) * nlist.n);
-	if (r == NULL) {
+	req = malloc(sizeof(*req) * nlist.n);
+	if (req == NULL) {
 		log_error("%s (malloc): no memory for %ld bytes", diag,
-			sizeof(*r) * nlist.n);
+			sizeof(*req) * nlist.n);
 		goto ring_list_free;
 	}
 	di = random() % nlist.n;
 	for (i = 0; i < nlist.n; ++i) {
 		ii = (i + di) % nlist.n;
-		r[ii].need_wait = 0;
 		if (nlist.s[ii].address == NULL)
 			continue;
-		ret = fs_async_rpc_inode_sync_request(nlist.s[ii].address,
-			&r[ii].req);
-		if (ret != HG_SUCCESS) {
+		req[i].e = fs_async_rpc_inode_sync_request(nlist.s[ii].address,
+			&req[i].r);
+		if (req[i].e != HG_SUCCESS)
 			log_notice("%s (sync_request): %s, %s", diag,
-				nlist.s[ii].address, HG_Error_to_string(ret));
-			continue;
-		}
-		r[ii].need_wait = 1;
+				nlist.s[ii].address,
+				HG_Error_to_string(req[i].e));
 	}
 	for (i = 0; i < nlist.n; ++i) {
 		ii = (i + di) % nlist.n;
-		if (r[ii].need_wait == 0)
+		if (nlist.s[ii].address == NULL || req[i].e != HG_SUCCESS)
 			continue;
-		ret = fs_async_rpc_inode_sync_wait(&r[ii].req);
-		if (ret != HG_SUCCESS) {
+		ret = fs_async_rpc_inode_sync_wait(&req[i].r);
+		if (ret != HG_SUCCESS)
 			log_notice("%s (sync_wait): %s, %s", diag,
 				nlist.s[ii].address, HG_Error_to_string(ret));
-			continue;
-		}
 	}
-	free(r);
+	free(req);
 ring_list_free:
 	ring_list_copy_free(&nlist);
 	log_info("%s", diag);
