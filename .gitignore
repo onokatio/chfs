@@ -26,6 +26,8 @@ pkgconfig/chfs.pc
 *~
 /build
 
+dev/test/test
+
 ## spack
 removed_la_files.txt
 spack-build-*

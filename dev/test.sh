@@ -8,12 +8,16 @@ BACKEND=$PWD/backend
 
 trap 'rm -f $BACKEND/test-*' 0 1 2 15
 
+# test
+(cd test; make)
+
 # clean up
 chfsctl -h hosts -m $MDIR stop 2> /dev/null
 chfsctl -h hosts clean
 
 eval $(chfsctl -h hosts -m $MDIR -b $BACKEND -f 2 -L log start)
 chlist
+test/test
 cp ~/chfs/configure $BACKEND
 diff ~/chfs/configure $MDIR/configure
 s1=$(wc ~/chfs/configure | awk '{ print $3 }')
