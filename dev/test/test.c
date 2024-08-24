@@ -110,12 +110,35 @@ test_truncate(char *f, int chunk_size, int size)
 	test_create_file(f, chunk_size, size);
 
 	_(chfs_truncate(f, 0));
-
 	_(chfs_stat(f, &sb));
 	assert(sb.st_size == 0);
 
 	fd = chfs_open(f, O_RDONLY);
 	assert(fd != -1);
+	_(chfs_pread(fd, buf, 1, 0));
+	_(chfs_close(fd));
+
+	test_unlink(f);
+	puts("done");
+}
+
+static void
+test_ftruncate(char *f, int chunk_size, int size)
+{
+	int fd;
+	char buf[1];
+	struct stat sb;
+
+	printf("test_ftruncate: %s chunk %d size %d: ", f, chunk_size, size);
+	fflush(stdout);
+	test_create_file(f, chunk_size, size);
+
+	fd = chfs_open(f, O_RDWR);
+	assert(fd != -1);
+	_(chfs_ftruncate(fd, 0));
+	_(chfs_fstat(fd, &sb));
+	assert(sb.st_size == 0);
+
 	_(chfs_pread(fd, buf, 1, 0));
 	_(chfs_close(fd));
 
@@ -203,6 +226,7 @@ main(int argc, char *argv[])
 	test_write_read("a", 64, 255);
 
 	test_truncate("a", 64, 256);
+	test_ftruncate("a", 64, 256);
 	test_symlink("b", "a");
 	test_readdir("a");
 
