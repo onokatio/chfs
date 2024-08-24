@@ -178,10 +178,10 @@ index 0000000000..63306351d4
 +#endif /* AD_CHFS_H_INCLUDED */
 diff --git a/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_close.c b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_close.c
 new file mode 100644
-index 0000000000..4e8a5efc3a
+index 0000000000..8c78f7de38
 --- /dev/null
 +++ b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_close.c
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,27 @@
 +/*
 + * Copyright (C) by Argonne National Laboratory
 + *     See COPYRIGHT in top-level directory
@@ -193,7 +193,6 @@ index 0000000000..4e8a5efc3a
 +
 +void ADIOI_CHFS_Close(ADIO_File fd, int* error_code) {
 +  static char myname[] = "ADIOI_CHFS_Close";
-+  struct ADIOI_CHFS_fs_s *chfs_fs;
 +
 +#ifdef DEBUG
 +  int myrank, nprocs;
@@ -208,17 +207,14 @@ index 0000000000..4e8a5efc3a
 +    *error_code = ADIOI_Err_create_code(myname, fd->filename, errno);
 +    return;
 +  }
-+  chfs_fs = (ADIOI_CHFS_fs*) fd->fs_ptr;
-+  ADIOI_Free(chfs_fs);
-+  fd->fs_ptr = NULL;
 +  fd->fd_sys = -1;
 +}
 diff --git a/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_common.c b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_common.c
 new file mode 100644
-index 0000000000..4a68e5ea79
+index 0000000000..4e2b47582f
 --- /dev/null
 +++ b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_common.c
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,35 @@
 +#include "ad_chfs_common.h"
 +#include "ad_chfs.h"
 +#include "adioi.h"
@@ -254,55 +250,26 @@ index 0000000000..4a68e5ea79
 +    return res;
 +  }
 +}
-+
-+char* ADIOI_CHFS_get_absolute_path(const char* relative_path, char* buf, size_t size) {
-+  size_t rel_path_len, cwd_len;
-+  rel_path_len = strlen(relative_path);
-+  if (relative_path[0] != '/') {
-+    if (getcwd(buf, size) == NULL) {
-+      return NULL;
-+    }
-+    cwd_len = strlen(buf);
-+    if (cwd_len + 1 + rel_path_len + 1 > size) {
-+      errno = ENAMETOOLONG;
-+      return NULL;
-+    }
-+    buf[cwd_len] = '/';
-+    memcpy(buf + cwd_len + 1, relative_path, rel_path_len + 1);
-+  } else {
-+    memcpy(buf, relative_path, rel_path_len + 1);
-+  }
-+  return buf;
-+}
 diff --git a/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_common.h b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_common.h
 new file mode 100644
-index 0000000000..4f975db67d
+index 0000000000..8efb04d6f0
 --- /dev/null
 +++ b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_common.h
-@@ -0,0 +1,17 @@
+@@ -0,0 +1,8 @@
 +#ifndef AD_CHFS_COMMON_H_INCLUDED
 +#define AD_CHFS_COMMON_H_INCLUDED
 +
 +#include <limits.h>
 +#include "adio.h"
 +
-+struct ADIOI_CHFS_fs_s {
-+  char absolute_path[PATH_MAX];
-+};
-+typedef struct ADIOI_CHFS_fs_s ADIOI_CHFS_fs;
-+
 +MPI_Offset ADIOI_CHFS_get_size_coll(ADIO_File fd, int* error_code);
-+char* ADIOI_CHFS_get_absolute_path(const char* relative_path,
-+                                   char* buf,
-+                                   size_t size);
-+
 +#endif
 diff --git a/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_delete.c b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_delete.c
 new file mode 100644
-index 0000000000..560bfa2e64
+index 0000000000..1a933044be
 --- /dev/null
 +++ b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_delete.c
-@@ -0,0 +1,39 @@
+@@ -0,0 +1,32 @@
 +/*
 + * Copyright (C) by Argonne National Laboratory
 + *     See COPYRIGHT in top-level directory
@@ -315,7 +282,6 @@ index 0000000000..560bfa2e64
 +
 +void ADIOI_CHFS_Delete(const char* filename, int* error_code) {
 +  static char myname[] = "ADIOI_CHFS_Delete";
-+  char absolute_path[PATH_MAX];
 +
 +#ifdef DEBUG
 +  int myrank, nprocs;
@@ -332,13 +298,7 @@ index 0000000000..560bfa2e64
 +    return;
 +  }
 +
-+  if (ADIOI_CHFS_get_absolute_path(filename, absolute_path,
-+                                   sizeof(absolute_path)) == NULL) {
-+    *error_code = ADIOI_Err_create_code(myname, filename, errno);
-+    return;
-+  }
-+
-+  if (chfs_unlink(absolute_path)) {
++  if (chfs_unlink(filename)) {
 +    *error_code = ADIOI_Err_create_code(myname, filename, errno);
 +  }
 +}
@@ -386,10 +346,10 @@ index 0000000000..8643a8f98a
 +}
 diff --git a/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_fcntl.c b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_fcntl.c
 new file mode 100644
-index 0000000000..5a6a992ae5
+index 0000000000..279b1854f8
 --- /dev/null
 +++ b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_fcntl.c
-@@ -0,0 +1,50 @@
+@@ -0,0 +1,48 @@
 +/*
 + * Copyright (C) by Argonne National Laboratory
 + *     See COPYRIGHT in top-level directory
@@ -406,7 +366,6 @@ index 0000000000..5a6a992ae5
 +                      int* error_code) {
 +  int myrank, nprocs;
 +  static char myname[] = "ADIOI_CHFS_Fcntl";
-+  struct ADIOI_CHFS_fs_s* chfs_fs;
 +
 +#ifdef DEBUG
 +  MPI_Comm_size(fd->comm, &nprocs);
@@ -419,10 +378,9 @@ index 0000000000..5a6a992ae5
 +
 +  switch (flag) {
 +    case ADIO_FCNTL_GET_FSIZE:
-+      chfs_fs = (ADIOI_CHFS_fs*)fd->fs_ptr;
 +      fcntl_struct->fsize = 0;
 +      struct stat st;
-+      if (chfs_stat(chfs_fs->absolute_path, &st)) {
++      if (chfs_fstat(fd->fd_sys, &st)) {
 +        *error_code = ADIOI_Err_create_code(myname, fd->filename, errno);
 +      } else {
 +        fcntl_struct->fsize = st.st_size;
@@ -740,10 +698,10 @@ index 0000000000..8645411a21
 +}
 diff --git a/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_open.c b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_open.c
 new file mode 100644
-index 0000000000..013c930089
+index 0000000000..4427e6c094
 --- /dev/null
 +++ b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_open.c
-@@ -0,0 +1,96 @@
+@@ -0,0 +1,78 @@
 +/*
 + * Copyright (C) by Argonne National Laboratory
 + *     See COPYRIGHT in top-level directory
@@ -758,7 +716,6 @@ index 0000000000..013c930089
 +
 +void ADIOI_CHFS_Open(ADIO_File fd, int* error_code) {
 +  static char myname[] = "ADIOI_CHFS_Open";
-+  struct ADIOI_CHFS_fs_s* chfs_fs;
 +
 +#ifdef DEBUG
 +  int myrank, nprocs;
@@ -772,21 +729,6 @@ index 0000000000..013c930089
 +
 +  ADIOI_CHFS_Init(error_code);
 +  if (*error_code != MPI_SUCCESS) {
-+    return;
-+  }
-+
-+  chfs_fs = (ADIOI_CHFS_fs*)ADIOI_Malloc(sizeof(ADIOI_CHFS_fs));
-+  if (chfs_fs == NULL) {
-+    *error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-+                                       myname, __LINE__, MPI_ERR_UNKNOWN,
-+                                       "Error allocating memory", 0);
-+    return;
-+  }
-+
-+  if (ADIOI_CHFS_get_absolute_path(fd->filename, chfs_fs->absolute_path,
-+                                   sizeof(chfs_fs->absolute_path)) == NULL) {
-+    *error_code = ADIOI_Err_create_code(myname, fd->filename, errno);
-+    ADIOI_Free(chfs_fs);
 +    return;
 +  }
 +
@@ -820,24 +762,22 @@ index 0000000000..013c930089
 +  if (fd->access_mode & ADIO_CREATE) {
 +#ifdef DEBUG
 +    FPRINTF(stdout, "[%d/%d]    calling chfs_create %s\n", myrank, nprocs,
-+            chfs_fs->absolute_path);
++            fd->filename);
 +#endif
-+    fd->fd_sys = chfs_create(chfs_fs->absolute_path, flags, perm);
++    fd->fd_sys = chfs_create(fd->filename, flags, perm);
 +  } else {
 +#ifdef DEBUG
 +    FPRINTF(stdout, "[%d/%d]    calling chfs_open %s\n", myrank, nprocs,
-+            chfs_fs->absolute_path);
++            fd->filename);
 +#endif
-+    fd->fd_sys = chfs_open(chfs_fs->absolute_path, flags);
++    fd->fd_sys = chfs_open(fd->filename, flags);
 +  }
 +
 +  if (fd->fd_sys < 0) {
 +    *error_code = ADIOI_Err_create_code(myname, fd->filename, errno);
-+    ADIOI_Free(chfs_fs);
 +    return;
 +  }
 +
-+  fd->fs_ptr = chfs_fs;
 +  fd->fd_direct = -1;
 +}
 diff --git a/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_rdcoll.c b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_rdcoll.c
@@ -874,10 +814,10 @@ index 0000000000..69fb8740f4
 +}
 diff --git a/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_read.c b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_read.c
 new file mode 100644
-index 0000000000..382582a9fd
+index 0000000000..b1b7942c25
 --- /dev/null
 +++ b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_read.c
-@@ -0,0 +1,94 @@
+@@ -0,0 +1,93 @@
 +/*
 + * Copyright (C) by Argonne National Laboratory
 + *     See COPYRIGHT in top-level directory
@@ -897,7 +837,6 @@ index 0000000000..382582a9fd
 +                           int* error_code) {
 +  static char myname[] = "ADIOI_CHFS_ReadContig";
 +  int myrank, nprocs;
-+  struct ADIOI_CHFS_fs_s* chfs_fs = (ADIOI_CHFS_fs*)fd->fs_ptr;;
 +  MPI_Count datatype_size;
 +  MPI_Type_size_x(datatype, &datatype_size);
 +
@@ -974,10 +913,10 @@ index 0000000000..382582a9fd
 +}
 diff --git a/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_resize.c b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_resize.c
 new file mode 100644
-index 0000000000..7685a2fbfe
+index 0000000000..623ac677a5
 --- /dev/null
 +++ b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_resize.c
-@@ -0,0 +1,37 @@
+@@ -0,0 +1,35 @@
 +/*
 + * Copyright (C) by Argonne National Laboratory
 + *     See COPYRIGHT in top-level directory
@@ -991,7 +930,6 @@ index 0000000000..7685a2fbfe
 +  static char myname[] = "ADIOI_CHFS_Resize";
 +  int ret;
 +  int nprocs, myrank;
-+  struct ADIOI_CHFS_fs_s* chfs_fs;
 +
 +  MPI_Comm_rank(fd->comm, &myrank);
 +#ifdef DEBUG
@@ -1005,8 +943,7 @@ index 0000000000..7685a2fbfe
 +
 +
 +  if (myrank == 0) {
-+    chfs_fs = (ADIOI_CHFS_fs*)fd->fs_ptr;
-+    ret = chfs_truncate(chfs_fs->absolute_path, size);
++    ret = chfs_ftruncate(fd->fd_sys, size);
 +  }
 +
 +  MPI_Bcast(&ret, 1, MPI_INT, 0, fd->comm);
@@ -1209,10 +1146,10 @@ index 0000000000..413251a753
 +}
 diff --git a/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_write.c b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_write.c
 new file mode 100644
-index 0000000000..ad0e25f36b
+index 0000000000..4e257681df
 --- /dev/null
 +++ b/ompi/mca/io/romio321/romio/adio/ad_chfs/ad_chfs_write.c
-@@ -0,0 +1,101 @@
+@@ -0,0 +1,100 @@
 +/*
 + * Copyright (C) by Argonne National Laboratory
 + *     See COPYRIGHT in top-level directory
@@ -1233,7 +1170,6 @@ index 0000000000..ad0e25f36b
 +  static char myname[] = "ADIOI_CHFS_WriteContig";
 +  int myrank, nprocs;
 +  MPI_Count datatype_size;
-+  struct ADIOI_CHFS_fs_s* chfs_fs = (ADIOI_CHFS_fs*)fd->fs_ptr;;
 +  MPI_Type_size_x(datatype, &datatype_size);
 +
 +#ifdef DEBUG
