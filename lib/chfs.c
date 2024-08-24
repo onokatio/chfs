@@ -1752,6 +1752,16 @@ chfs_stat(const char *path, struct stat *st)
 }
 
 int
+chfs_fstat(int fd, struct stat *st)
+{
+	struct fd_table *tab = get_fd_table(fd);
+
+	if (tab == NULL)
+		return (-1);
+	return (chfs_stat(tab->path, st));
+}
+
+int
 chfs_access(const char *path, int mode)
 {
 	char *p = canonical_path(path);
@@ -1832,6 +1842,16 @@ chfs_truncate(const char *path, off_t len)
 	free(p);
 	log_info("%s: path=%s len=%ld", diag, path, len);
 	return (0);
+}
+
+int
+chfs_ftruncate(int fd, off_t len)
+{
+	struct fd_table *tab = get_fd_table(fd);
+
+	if (tab == NULL)
+		return (-1);
+	return (chfs_truncate(tab->path, len));
 }
 
 static int

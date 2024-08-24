@@ -25,10 +25,12 @@ ssize_t chfs_read(int fd, void *buf, size_t size);
 off_t chfs_seek(int fd, off_t off, int whence);
 int chfs_fsync(int fd);
 int chfs_truncate(const char *path, off_t len);
+int chfs_ftruncate(int fd, off_t len);
 int chfs_unlink(const char *path);
 int chfs_mkdir(const char *path, mode_t mode);
 int chfs_rmdir(const char *path);
 int chfs_stat(const char *path, struct stat *st);
+int chfs_fstat(int fd, struct stat *st);
 int chfs_access(const char *path, int mode);
 int chfs_readdir(const char *path, void *buf,
 	int (*filler)(void *, const char *, const struct stat *, off_t));
