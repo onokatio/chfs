@@ -15,8 +15,9 @@ alloc_buf(int size)
 	int i;
 
 	assert(b);
+	srandom(size);
 	for (i = 0; i < size; ++i)
-		b[i] = i % 256;
+		b[i] = random() % 256;
 
 	return (b);
 }
@@ -52,7 +53,7 @@ test_create_file(char *f, int chunk_size, int size)
 	_(chfs_stat(f, &sb));
 	assert(sb.st_blksize == chunk_size);
 	assert(sb.st_size == size);
-	_(chfs_access(f, 0));
+	_(chfs_access(f, F_OK));
 }
 
 static void
@@ -62,7 +63,18 @@ test_unlink(char *f)
 
 	_(chfs_unlink(f));
 	assert(chfs_stat(f, &sb));
-	assert(chfs_access(f, 0));
+	assert(chfs_access(f, F_OK));
+}
+
+static void
+test_mkdir(char *p)
+{
+	struct stat sb;
+
+	_(chfs_mkdir(p, 0755));
+	_(chfs_stat(p, &sb));
+	assert(S_ISDIR(sb.st_mode));
+	_(chfs_access(p, F_OK));
 }
 
 static void
@@ -72,7 +84,7 @@ test_rmdir(char *d)
 
 	_(chfs_rmdir(d));
 	assert(chfs_stat(d, &sb));
-	assert(chfs_access(d, 0));
+	assert(chfs_access(d, F_OK));
 }
 
 static void
@@ -111,23 +123,7 @@ test_truncate(char *f, int chunk_size, int size)
 	puts("done");
 }
 
-void
-test_mkdir(char *p)
-{
-	struct stat sb;
-
-	printf("test_mkdir: %s: ", p);
-	fflush(stdout);
-	_(chfs_mkdir(p, 0755));
-	_(chfs_stat(p, &sb));
-	assert(S_ISDIR(sb.st_mode));
-	_(chfs_access(p, 0));
-
-	test_rmdir(p);
-	puts("done");
-}
-
-void
+static void
 test_symlink(char *p1, char *p2)
 {
 	struct stat sb;
@@ -135,7 +131,6 @@ test_symlink(char *p1, char *p2)
 	char *b = malloc(len);
 
 	assert(b);
-
 	printf("test_symlink: %s %s: ", p1, p2);
 	fflush(stdout);
 	_(chfs_symlink(p1, p2));
@@ -151,24 +146,26 @@ test_symlink(char *p1, char *p2)
 	puts("done");
 }
 
-int
+static int count = 0;
+
+static int
 filler(void *b, const char *e, const struct stat *st, off_t o)
 {
-	printf("%s\n", e);
+	++count;
 	return (0);
 }
 
-void
+static void
 test_readdir(char *d)
 {
 	int len = strlen(d);
 	char *b = malloc(len + 3);
 
 	assert(b);
-
 	printf("test_readdir: %s: ", d);
 	fflush(stdout);
-	_(chfs_mkdir(d, 0755));
+
+	test_mkdir(d);
 	sprintf(b, "%s/a", d);
 	test_create_file(b, 64, 256);
 	sprintf(b, "%s/b", d);
@@ -177,6 +174,8 @@ test_readdir(char *d)
 	test_create_file(b, 64, 256);
 
 	_(chfs_readdir(d, NULL, filler));
+	assert(count == 5);
+	count = 0;
 
 	sprintf(b, "%s/a", d);
 	test_unlink(b);
@@ -194,7 +193,7 @@ int
 main(int argc, char *argv[])
 {
 
-	chfs_init(NULL);
+	_(chfs_init(NULL));
 
 	printf("CHFS version %s\n", chfs_version());
 	printf("CHFS size = %d\n", chfs_size());
@@ -204,9 +203,8 @@ main(int argc, char *argv[])
 	test_write_read("a", 64, 255);
 
 	test_truncate("a", 64, 256);
-	test_mkdir("a");
 	test_symlink("b", "a");
 	test_readdir("a");
 
-	chfs_term();
+	_(chfs_term());
 }
