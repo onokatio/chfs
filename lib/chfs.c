@@ -1216,6 +1216,7 @@ chfs_pwrite_internal_async(int fd, const char *buf, size_t size, off_t offset)
 ssize_t
 chfs_pwrite_internal(int fd, const void *buf, size_t size, off_t offset)
 {
+	log_info("chfs_pwrite: fd=%d size=%ld off=%ld", fd, size, offset);
 	if (chfs_async_access)
 		return (chfs_pwrite_internal_async(fd, buf, size, offset));
 	return (chfs_pwrite_internal_sync(fd, buf, size, offset));
@@ -1229,7 +1230,6 @@ chfs_pwrite(int fd, const void *buf, size_t size, off_t offset)
 	s = fd_write(fd, buf, size, offset);
 	if (s > 0)
 		return (s);
-	log_info("chfs_pwrite: fd=%d size=%ld off=%ld", fd, size, offset);
 	return (chfs_pwrite_internal(fd, buf, size, offset));
 }
 
@@ -1434,6 +1434,7 @@ chfs_pread_internal_async(int fd, char *buf, size_t size, off_t offset)
 ssize_t
 chfs_pread_internal(int fd, void *buf, size_t size, off_t offset)
 {
+	log_info("chfs_pread: fd=%d size=%ld off=%ld", fd, size, offset);
 	if (chfs_async_access)
 		return (chfs_pread_internal_async(fd, buf, size, offset));
 	return (chfs_pread_internal_sync(fd, buf, size, offset));
@@ -1447,7 +1448,6 @@ chfs_pread(int fd, void *buf, size_t size, off_t offset)
 	s = fd_read(fd, buf, size, offset);
 	if (s > 0)
 		return (s);
-	log_info("chfs_pread: fd=%d size=%ld off=%ld", fd, size, offset);
 	return (chfs_pread_internal(fd, buf, size, offset));
 }
 
