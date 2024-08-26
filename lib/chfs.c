@@ -40,6 +40,7 @@ static struct fd_table {
 	int chunk_size;
 	off_t pos;
 	char *buf;
+	int buf_size;
 	off_t buf_off, buf_pos;
 	int buf_dirty;
 	ABT_mutex mutex;
@@ -416,6 +417,7 @@ create_fd_unlocked(const char *path, uint32_t mode, int chunk_size)
 			log_error("create_fd: %s, no memory", path);
 			return (-1);
 		}
+		fd_table[fd].buf_size = chfs_buf_size;
 	}
 	fd_table[fd].mode = MODE_MASK(mode);
 	fd_table[fd].cache_flags = FLAGS_FROM_MODE(mode);
@@ -582,7 +584,7 @@ fd_write(int fd, const char *buf, size_t size, off_t offset)
 
 	if (tab == NULL || tab->buf == NULL)
 		return (0);
-	if (size > chfs_buf_size) {
+	if (size > tab->buf_size) {
 		/* large message, skip buffering */
 		fd_flush(fd);
 		return (0);
@@ -593,7 +595,7 @@ fd_write(int fd, const char *buf, size_t size, off_t offset)
 			tab->buf_off = offset;
 		buf_off = offset - tab->buf_off;
 		if (buf_off >= 0 && buf_off <= tab->buf_pos) {
-			s = chfs_buf_size - buf_off;
+			s = tab->buf_size - buf_off;
 			if (s > size - ss)
 				s = size - ss;
 			if (s > 0) {
@@ -604,7 +606,7 @@ fd_write(int fd, const char *buf, size_t size, off_t offset)
 					tab->buf_pos = buf_off + s;
 				ss += s;
 			}
-			if (tab->buf_pos == chfs_buf_size)
+			if (tab->buf_pos == tab->buf_size)
 				fd_flush_unlocked(fd);
 		} else
 			fd_flush_unlocked(fd);
@@ -625,7 +627,7 @@ fd_read(int fd, char *buf, size_t size, off_t offset)
 
 	if (tab == NULL)
 		return (0); /* EBADF */
-	if (tab->buf == NULL || size > chfs_buf_size) {
+	if (tab->buf == NULL || size > tab->buf_size) {
 		/* large message, skip buffering */
 		return (0);
 	}
@@ -633,7 +635,7 @@ fd_read(int fd, char *buf, size_t size, off_t offset)
 	while (size > ss) {
 		if (tab->buf_pos == 0) {
 			tab->buf_off = offset;
-			s = chfs_pread_internal(fd, tab->buf, chfs_buf_size,
+			s = chfs_pread_internal(fd, tab->buf, tab->buf_size,
 				tab->buf_off);
 			if (s > 0)
 				tab->buf_pos = s;
