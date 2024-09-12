@@ -23,23 +23,44 @@ alloc_buf(int size)
 }
 
 static void
-test_create_file(char *f, int chunk_size, int size)
+test_create_file(char *f, int chunk_size, int size, int blk_size)
 {
 	int fd, r, i;
 	char *b1, *b2;
 	struct stat sb;
 
+	if (blk_size <= 0)
+		blk_size = size;
+
 	fd = chfs_create_chunk_size(f, O_WRONLY, 0644, chunk_size);
 	assert(fd != -1);
 
 	b1 = alloc_buf(size);
-	r = chfs_write(fd, b1, size);
-	assert(r == size);
+	i = 0;
+	r = size - i;
+	if (r > blk_size)
+		r = blk_size;
+	while (i < size) {
+		assert(chfs_write(fd, &b1[i], r) == r);
+		i += r;
+		r = size - i;
+		if (r > blk_size)
+			r = blk_size;
+	}
 
 	b2 = malloc(size);
 	assert(b2);
-	r = chfs_pread(fd, b2, size, 0);
-	assert(r == size);
+	i = 0;
+	r = size - i;
+	if (r > blk_size)
+		r = blk_size;
+	while (i < size) {
+		assert(chfs_pread(fd, &b2[i], r, i) == r);
+		i += r;
+		r = size - i;
+		if (r > blk_size)
+			r = blk_size;
+	}
 
 	for (i = 0; i < size; ++i)
 		assert(b1[i] == b2[i]);
@@ -88,11 +109,12 @@ test_rmdir(char *d)
 }
 
 static void
-test_write_read(char *f, int chunk_size, int size)
+test_write_read(char *f, int chunk_size, int size, int blk_size)
 {
-	printf("test_write_read: %s chunk %d size %d: ", f, chunk_size, size);
+	printf("test_write_read: %s chunk %d size %d blk %d: ", f, chunk_size,
+			size, blk_size);
 	fflush(stdout);
-	test_create_file(f, chunk_size, size);
+	test_create_file(f, chunk_size, size, blk_size);
 
 	test_unlink(f);
 	puts("done");
@@ -107,7 +129,7 @@ test_truncate(char *f, int chunk_size, int size)
 
 	printf("test_truncate: %s chunk %d size %d: ", f, chunk_size, size);
 	fflush(stdout);
-	test_create_file(f, chunk_size, size);
+	test_create_file(f, chunk_size, size, 0);
 
 	_(chfs_truncate(f, 0));
 	_(chfs_stat(f, &sb));
@@ -131,7 +153,7 @@ test_ftruncate(char *f, int chunk_size, int size)
 
 	printf("test_ftruncate: %s chunk %d size %d: ", f, chunk_size, size);
 	fflush(stdout);
-	test_create_file(f, chunk_size, size);
+	test_create_file(f, chunk_size, size, 0);
 
 	fd = chfs_open(f, O_RDWR);
 	assert(fd != -1);
@@ -174,6 +196,8 @@ static int count = 0;
 static int
 filler(void *b, const char *e, const struct stat *st, off_t o)
 {
+	if (e[0] == '.' && (e[1] == '\0' || (e[1] == '.' && e[2] == '\0')))
+		return (0);
 	++count;
 	return (0);
 }
@@ -190,14 +214,14 @@ test_readdir(char *d)
 
 	test_mkdir(d);
 	sprintf(b, "%s/a", d);
-	test_create_file(b, 64, 256);
+	test_create_file(b, 64, 256, 0);
 	sprintf(b, "%s/b", d);
-	test_create_file(b, 64, 256);
+	test_create_file(b, 64, 256, 0);
 	sprintf(b, "%s/c", d);
-	test_create_file(b, 64, 256);
+	test_create_file(b, 64, 256, 0);
 
 	_(chfs_readdir(d, NULL, filler));
-	assert(count == 5);
+	assert(count == 3);
 	count = 0;
 
 	sprintf(b, "%s/a", d);
@@ -221,9 +245,28 @@ main(int argc, char *argv[])
 	printf("CHFS version %s\n", chfs_version());
 	printf("CHFS size = %d\n", chfs_size());
 
-	test_write_read("a", 64, 256);
-	test_write_read("a", 64, 257);
-	test_write_read("a", 64, 255);
+	test_write_read("a", 64, 256, 0);
+	test_write_read("a", 64, 257, 0);
+	test_write_read("a", 64, 255, 0);
+
+	chfs_set_async_access(1);
+	puts("async access");
+	test_write_read("a", 64, 256, 0);
+	test_write_read("a", 64, 257, 0);
+	test_write_read("a", 64, 255, 0);
+	chfs_set_async_access(0);
+	puts("sync access");
+
+	chfs_set_buf_size(32);
+	puts("buf size: 32");
+	test_write_read("a", 64, 256, 1);
+	chfs_set_buf_size(128);
+	puts("buf size: 128");
+	test_write_read("a", 64, 256, 1);
+	test_write_read("a", 64, 257, 1);
+	test_write_read("a", 64, 255, 1);
+	chfs_set_buf_size(0);
+	puts("buf size: 0");
 
 	test_truncate("a", 64, 256);
 	test_ftruncate("a", 64, 256);
