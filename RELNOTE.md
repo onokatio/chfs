@@ -1,3 +1,20 @@
+# Release note for CHFS/Cache 3.0.3 (2024/10/16)
+
+## New API
+- chfs_access()
+- chfs_fstat()
+- chfs_ftruncate()
+
+## Updated features
+- Server-initiated caching
+- Default is number-aware hashing, a.k.a. Koyama hashing.
+- chfs_unlink() - wait for removing all chunks
+- Log open, close, read and write in info level
+
+## Bug fixes
+- (chfsd) fix incorrect KV_ERR_NO_BACKEND_PATH error
+- (chfsd) plug memory leak when flushing
+
 # Release note for CHFS/Cache 3.0.2 (2024/3/2)
 
 ## New documents
