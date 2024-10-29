@@ -79,7 +79,7 @@ RUN cd \
  && make -j $(nproc) && make install \
  && ldconfig
 
-ARG MERCURY_VER=2.3.1
+ARG MERCURY_VER=2.4.0
 
 RUN cd \
  && wget https://github.com/mercury-hpc/mercury/archive/refs/tags/v$MERCURY_VER.tar.gz \
@@ -101,7 +101,7 @@ RUN cd \
  && make -j $(nproc) && make install \
  && ldconfig
 
-ARG MARGO_VER=0.18.1
+ARG MARGO_VER=0.18.2
 
 RUN cd \
  && wget https://github.com/mochi-hpc/mochi-margo/archive/refs/tags/v$MARGO_VER.tar.gz \
