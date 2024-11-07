@@ -71,3 +71,6 @@ chfsd - CHFS server
 
 -L log_priority
 : specifies the maximum log priority to report.  Default is notice.
+
+-Z
+: enables profiling

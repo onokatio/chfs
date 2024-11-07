@@ -3,13 +3,13 @@ bin_PROGRAMS = chkvdump
 endif
 sbin_PROGRAMS = chfsd
 noinst_HEADERS = ring.h ring_rpc.h fs.h kv.h host.h fs_kv.h fs_hook.h \
-		backend_local.h flush.h lock.h
+		backend_local.h flush.h lock.h profile.h
 
 chfsd_SOURCES = chfsd.c ring.c ring_rpc.c fs_server.c host.c fs_hook.c \
 		backend_local.c flush.c
 if USE_PMEMKV
-chfsd_SOURCES += fs_server_kv.c lock.c fs_kv.c pmemkv.c
-chkvdump_SOURCES = chkvdump.c lock.c fs_kv.c fs_hook.c flush.c pmemkv.c
+chfsd_SOURCES += fs_server_kv.c lock.c fs_kv.c pmemkv.c profile.c
+chkvdump_SOURCES = chkvdump.c lock.c fs_kv.c fs_hook.c flush.c pmemkv.c profile.c
 else
 chfsd_SOURCES += fs_server_posix.c lock.c fs_posix.c
 endif

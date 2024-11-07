@@ -3,11 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
 #include <libpmem.h>
 #include <libpmemkv.h>
 #include "kv_err.h"
 #include "kv.h"
 #include "log.h"
+#include "profile.h"
 
 static pmemkv_db *db = NULL;
 
@@ -101,8 +103,15 @@ kv_term()
 int
 kv_put(void *key, size_t key_size, void *value, size_t value_size)
 {
+	struct timespec ts1, ts2;
+	int r;
+
 	log_debug("local pmem put: key=%s", (char *)key);
-	return (kv_err(pmemkv_put(db, key, key_size, value, value_size)));
+	profile_gettime(&ts1);
+	r = kv_err(pmemkv_put(db, key, key_size, value, value_size));
+	profile_gettime(&ts2);
+	profile_enq(PROF_PUT, key, key_size, value_size, 0, &ts1, &ts2);
+	return (r);
 }
 
 int
@@ -115,13 +124,17 @@ kv_put_addr(void *key, size_t key_size, void **value, size_t value_size)
 int
 kv_get(void *key, size_t key_size, void *value, size_t *value_size)
 {
+	struct timespec ts1, ts2;
 	size_t o_size;
 	int r;
 
 	log_debug("local pmem get: key=%s", (char *)key);
+	profile_gettime(&ts1);
 	r = pmemkv_get_copy(db, key, key_size, value, *value_size, &o_size);
 	if (r == PMEMKV_STATUS_OK)
 		*value_size = o_size;
+	profile_gettime(&ts2);
+	profile_enq(PROF_GET, key, key_size, *value_size, 0, &ts1, &ts2);
 	return (kv_err(r));
 }
 
@@ -173,14 +186,18 @@ int
 kv_update(void *key, size_t key_size,
     size_t off, void *value, size_t *value_size)
 {
+	struct timespec ts1, ts2;
 	struct arg *a = create_arg(off, value, *value_size);
 	int r;
 
 	if (a == NULL)
 		return (PMEMKV_STATUS_OUT_OF_MEMORY);
+	profile_gettime(&ts1);
 	r = kv_get_cb(key, key_size, update_cb, a);
 	if (r == PMEMKV_STATUS_OK)
 		*value_size = a->size;
+	profile_gettime(&ts2);
+	profile_enq(PROF_UPDATE, key, key_size, *value_size, off, &ts1, &ts2);
 	free(a);
 	return (r);
 }
@@ -204,14 +221,18 @@ pget_cb(const char *v, size_t size, void *a)
 int
 kv_pget(void *key, size_t key_size, size_t off, void *value, size_t *value_size)
 {
+	struct timespec ts1, ts2;
 	struct arg *a = create_arg(off, value, *value_size);
 	int r;
 
 	if (a == NULL)
 		return (PMEMKV_STATUS_OUT_OF_MEMORY);
+	profile_gettime(&ts1);
 	r = kv_get_cb(key, key_size, pget_cb, a);
 	if (r == PMEMKV_STATUS_OK)
 		*value_size = a->size;
+	profile_gettime(&ts2);
+	profile_enq(PROF_PGET, key, key_size, *value_size, off, &ts1, &ts2);
 	free(a);
 	return (r);
 }
@@ -233,7 +254,14 @@ kv_get_size(void *key, size_t key_size, size_t *value_size)
 int
 kv_remove(void *key, size_t key_size)
 {
-	return (kv_err(pmemkv_remove(db, key, key_size)));
+	struct timespec ts1, ts2;
+	int r;
+
+	profile_gettime(&ts1);
+	r = kv_err(pmemkv_remove(db, key, key_size));
+	profile_gettime(&ts2);
+	profile_enq(PROF_REMOVE, key, key_size, 0, 0, &ts1, &ts2);
+	return (r);
 }
 
 int

@@ -23,6 +23,7 @@
 #include "file.h"
 #include "flush.h"
 #include "log.h"
+#include "profile.h"
 
 static char *self;
 
@@ -133,6 +134,8 @@ handle_sig(void *arg)
 	ABT_cond_signal(stop_cond);
 	ABT_mutex_unlock(mutex);
 
+	profile_dump();
+
 	leave();
 
 	return (NULL);
@@ -224,7 +227,7 @@ usage(char *prog_name)
 		"[-n vname] [-N virtual_name]\n\t[-P pid_file] [-l log_file] "
 		"[-S server_info_file] [-t rpc_timeout_msec]\n\t"
 		"[-T nthreads] [-I niothreads] [-H heartbeat_interval] "
-		"[-L log_priority]\n\t[server]\n", prog_name);
+		"[-L log_priority] [-Z]\n\t[server]\n", prog_name);
 	exit(EXIT_FAILURE);
 }
 
@@ -251,7 +254,7 @@ main(int argc, char *argv[])
 	prog_name = basename(argv[0]);
 
 	while ((opt = getopt(argc, argv,
-			"b:B:c:dfF:h:H:I:l:L:n:N:p:P:s:S:t:T:U:")) != -1) {
+			"b:B:c:dfF:h:H:I:l:L:n:N:p:P:s:S:t:T:U:Z")) != -1) {
 		switch (opt) {
 		case 'b':
 			backend_dir = optarg;
@@ -316,6 +319,9 @@ main(int argc, char *argv[])
 			break;
 		case 'U':
 			fs_server_set_rpc_last_interval(strtod(optarg, NULL));
+			break;
+		case 'Z':
+			profile_enable(1);
 			break;
 		default:
 			usage(prog_name);
