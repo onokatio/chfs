@@ -37,8 +37,11 @@ CHFS/Cache provides a caching mechanism against a backend parallel file system. 
 
 1. Install development kits
 
-       # apt install git python3
-       # apt install gcc automake libtool cmake pkgconf vim
+       # apt install git python3 gcc automake libtool cmake pkgconf vim libfuse-dev
+
+(Optional) Install pandoc to generate manual pages
+
+       # apt install pandoc
 
 1. Install Spack
 
@@ -46,19 +49,13 @@ CHFS/Cache provides a caching mechanism against a backend parallel file system. 
        % . spack/share/spack/setup-env.sh
 
    For details, see https://spack.readthedocs.io/
+ 
+1. Install dependencies (mochi-margo)
 
-1. Install Mochi-margo
-
-       % spack install mochi-margo
-
-   Or, more recommended way to include verbs as follows;
-
-       % spack external find automake autoconf libtool cmake m4 pkgconf
-       % spack config edit packages
-       manually add rdma-core
-       % spack spec mochi-margo ^mercury~boostsys ^libfabric fabrics=rxm,sockets,tcp,udp,verbs
-       see what packages will be built
-       % spack install mochi-margo ^mercury~boostsys ^libfabric fabrics=rxm,sockets,tcp,udp,verbs
+       % git clone https://github.com/otatebe/chfs.git
+       % cd chfs
+       % spack env create -d .
+       % spack env activate -d .
 
    For details, see https://mochi.readthedocs.io/
 
@@ -68,35 +65,20 @@ CHFS/Cache provides a caching mechanism against a backend parallel file system. 
 
    For details, see https://pmem.io/pmemkv/
 
-1. Install Fuse
-
-       # apt install libfuse-dev
-
-1. (Optional) Install pandoc to generate manual pages
-
-       # apt install pandoc
-
 1. Install CHFS
 
-       % spack load mochi-margo
-       % git clone https://github.com/otatebe/chfs.git
-       % cd chfs
        % autoreconf -i
        % ./configure [--prefix=PREFIX] [--with-pmemkv] [--enable-zero-copy-read-rdma]
        % make
        # make install
 
-   If --with-pmemkv is not specified, CHFS uses a POSIX backend.  To use chfs, `spack load mochi-margo` is required.
+   If --with-pmemkv is not specified, CHFS uses a POSIX backend.  To use chfs, `spack env activate` is required.
 
 ## Quick installation steps by Spack
 
 1. Install required packages
 
-       # apt install git python3
-       # apt install gcc automake libtool cmake pkgconf vim
-       # apt install libfuse-dev fuse
-       # apt install libpmemkv-dev libmemkind-dev libtbb-dev rapidjson-dev
-       # apt install libopenmpi-dev
+       # apt install git python3 gcc automake libtool cmake pkgconf vim libfuse-dev fuse libpmemkv-dev libmemkind-dev libtbb-dev rapidjson-dev libopenmpi-dev
 
 1. Install Spack
 
